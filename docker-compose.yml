@@ -1,0 +1,115 @@
+# envless, containerised.
+#
+#   docker compose --profile setup run --rm seed   # first time only
+#   docker compose up --build                      # database, API, command centre
+#   docker compose --profile demo up --build       # ...and Pigeon running on it
+#
+# The command centre is at http://localhost:3000 and the API at
+# http://localhost:8000. Pigeon, when you bring it up, is at
+# http://localhost:8100.
+#
+# Every published port can be moved, for running this alongside the same
+# services started by hand:
+#
+#   CENTRE_PORT=3001 API_PORT=8001 PIGEON_PORT=8101
+#   NEXT_PUBLIC_ENVLESS_API=http://127.0.0.1:8001 docker compose up --build
+#
+# NEXT_PUBLIC_ENVLESS_API has to move with API_PORT: the browser reads it, and
+# it is baked into the bundle when the image is built.
+
+name: envless
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: postgres
+      # The local development password. Same one the rest of the project uses.
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-kali}
+      POSTGRES_DB: envless
+    ports:
+      # 5433 by default, because a machine developing this project usually has
+      # its own Postgres on 5432 already. This one is a separate database.
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d envless"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: ./backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:${POSTGRES_PASSWORD:-kali}@postgres:5432/envless
+      # Encrypts every stored value. Deliberately has no default: a key shipped
+      # in a repo is a key every deployment shares, and nobody would notice.
+      # Copy .env.example to .env and put one there. Keep it - values written
+      # under one key cannot be read under another.
+      ENVLESS_MASTER_KEY: ${ENVLESS_MASTER_KEY:?not set - copy .env.example to .env and generate one, see the README}
+      RUNTIME_RATE_LIMIT: ${RUNTIME_RATE_LIMIT:-120}
+      RUNTIME_BURST_ALERT: ${RUNTIME_BURST_ALERT:-30}
+    ports:
+      - "${API_PORT:-8000}:8000"
+    restart: unless-stopped
+
+  centre:
+    build:
+      context: ./frontend
+      args:
+        # Read by the browser, so it must be an address the browser can reach:
+        # the published port on the host, not the service name. Baked in at
+        # build time, so changing it means rebuilding.
+        NEXT_PUBLIC_ENVLESS_API: ${NEXT_PUBLIC_ENVLESS_API:-http://127.0.0.1:8000}
+    depends_on:
+      - api
+    ports:
+      - "${CENTRE_PORT:-3000}:3000"
+    restart: unless-stopped
+
+  # Run once to create the two fictional projects and issue Pigeon a token.
+  # The token goes into a volume the pigeon service reads, rather than over
+  # the host's pigeon/.env, so this stack and a locally run one stay separate.
+  seed:
+    profiles: ["setup"]
+    build: ./backend
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg://postgres:${POSTGRES_PASSWORD:-kali}@postgres:5432/envless
+      ENVLESS_MASTER_KEY: ${ENVLESS_MASTER_KEY:?not set - copy .env.example to .env and generate one, see the README}
+    volumes:
+      - seeded:/pigeon
+    command: ["python", "seed.py"]
+
+  pigeon:
+    profiles: ["demo"]
+    build: ./pigeon
+    depends_on:
+      api:
+        condition: service_healthy
+    volumes:
+      - seeded:/pigeon
+    environment:
+      # The token the seed wrote. If the seed has not been run there is no
+      # file, and Pigeon starts anyway and says it has no configuration -
+      # which is the behaviour worth having.
+      ENVLESS_ENV_FILE: /pigeon/.env
+      # Inside the network Pigeon talks to the API directly, whatever the .env
+      # written for the non-container setup says.
+      ENVLESS_URL: http://api:8000
+      HOST: 0.0.0.0
+      PORT: 8100
+    ports:
+      - "${PIGEON_PORT:-8100}:8100"
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  # Carries the token from the seed to Pigeon, and nothing else.
+  seeded:

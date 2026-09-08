@@ -1,0 +1,302 @@
+@import "tailwindcss";
+
+/*
+  envless command centre.
+
+  The surface is modelled on a railway interlocking panel: a painted grey-green
+  fascia, engraved plates screwed onto it, and signal lamps that only light when
+  they mean something. Depth is a bevel - one light edge, one dark edge - never
+  a drop shadow. Corners are all but square, because a metal panel has no
+  rounded cards on it.
+*/
+
+:root {
+  --fascia: #c6ccc2;
+  --fascia-deep: #b3baaf;
+  --plate: #d8dcd3;
+  --plate-lit: #e6e9e1;
+  --recess: #9aa296;
+
+  --ink: #191c18;
+  --ink-soft: #5a6157;
+  --ink-faint: #7c8378;
+
+  --clear: #2f6f4e;
+  --caution: #b8892b;
+  --danger: #8c2f39;
+  --lamp: #f6f4ec;
+  --lamp-dead: #6f7669;
+
+  --edge-light: rgba(255, 255, 255, 0.62);
+  --edge-dark: rgba(25, 28, 24, 0.22);
+  --rule: rgba(25, 28, 24, 0.16);
+
+  --radius: 2px;
+  --rail-width: 232px;
+
+  --font-panel: var(--font-barlow), "Barlow", system-ui, sans-serif;
+  --font-label: var(--font-barlow-condensed), "Barlow Semi Condensed", system-ui, sans-serif;
+  --font-data: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--fascia);
+  color: var(--ink);
+  font-family: var(--font-panel);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+}
+
+/* --- engraved surfaces ------------------------------------------------- */
+
+.plate {
+  background: var(--plate);
+  border-radius: var(--radius);
+  border-top: 1px solid var(--edge-light);
+  border-left: 1px solid var(--edge-light);
+  border-right: 1px solid var(--edge-dark);
+  border-bottom: 1px solid var(--edge-dark);
+}
+
+.recessed {
+  background: var(--fascia-deep);
+  border-radius: var(--radius);
+  border-top: 1px solid var(--edge-dark);
+  border-left: 1px solid var(--edge-dark);
+  border-right: 1px solid var(--edge-light);
+  border-bottom: 1px solid var(--edge-light);
+}
+
+/* --- panel labels: the engraved lettering on a fascia ------------------ */
+
+.label {
+  font-family: var(--font-label);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--ink-soft);
+}
+
+.data {
+  font-family: var(--font-data);
+  font-size: 12.5px;
+  font-variant-ligatures: none;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- signal lamps ------------------------------------------------------ */
+
+.lamp {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--lamp-dead);
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+
+.lamp[data-aspect="clear"] {
+  background: var(--clear);
+  box-shadow: 0 0 0 1px rgba(25, 28, 24, 0.3), 0 0 6px rgba(47, 111, 78, 0.75);
+}
+
+.lamp[data-aspect="caution"] {
+  background: var(--caution);
+  box-shadow: 0 0 0 1px rgba(25, 28, 24, 0.3), 0 0 6px rgba(184, 137, 43, 0.75);
+}
+
+.lamp[data-aspect="danger"] {
+  background: var(--danger);
+  box-shadow: 0 0 0 1px rgba(25, 28, 24, 0.3), 0 0 6px rgba(140, 47, 57, 0.75);
+}
+
+.lamp[data-dim="true"] {
+  opacity: 0.34;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.45);
+}
+
+/* The single piece of unprompted motion: a lamp flashes once when a change
+   lands from somewhere else, then stops. */
+@keyframes lamp-flash {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  30% {
+    opacity: 0.15;
+  }
+  60% {
+    opacity: 1;
+  }
+}
+
+.flashing {
+  animation: lamp-flash 620ms ease-in-out 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flashing {
+    animation: none;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* --- controls ---------------------------------------------------------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  background: var(--plate);
+  color: var(--ink);
+  border-radius: var(--radius);
+  border-top: 1px solid var(--edge-light);
+  border-left: 1px solid var(--edge-light);
+  border-right: 1px solid var(--edge-dark);
+  border-bottom: 1px solid var(--edge-dark);
+  font-family: var(--font-label);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--plate-lit);
+}
+
+.btn:active:not(:disabled) {
+  border-top-color: var(--edge-dark);
+  border-left-color: var(--edge-dark);
+  border-right-color: var(--edge-light);
+  border-bottom-color: var(--edge-light);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--ink);
+  color: var(--lamp);
+  border-color: rgba(255, 255, 255, 0.18) rgba(0, 0, 0, 0.4) rgba(0, 0, 0, 0.4)
+    rgba(255, 255, 255, 0.18);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #23271f;
+}
+
+.btn-danger {
+  color: var(--danger);
+}
+
+.btn-quiet {
+  background: transparent;
+  border-color: transparent;
+  color: var(--ink-soft);
+  padding: 4px 7px;
+}
+
+.btn-quiet:hover:not(:disabled) {
+  background: rgba(25, 28, 24, 0.08);
+  color: var(--ink);
+}
+
+.field {
+  width: 100%;
+  padding: 6px 9px;
+  background: var(--plate-lit);
+  border: 1px solid var(--recess);
+  border-top-color: rgba(25, 28, 24, 0.3);
+  border-radius: var(--radius);
+}
+
+.field::placeholder {
+  color: var(--ink-faint);
+}
+
+.field:focus {
+  outline: 2px solid var(--ink);
+  outline-offset: -1px;
+}
+
+/* --- scrollbars, kept in the panel's materials ------------------------- */
+
+::-webkit-scrollbar {
+  width: 11px;
+  height: 11px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--fascia-deep);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--recess);
+  border: 2px solid var(--fascia-deep);
+  border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ink-faint);
+}
+
+/* --- variable rows ------------------------------------------------------ */
+
+/*
+  Seventeen rows each repeating the same four controls is noise, not
+  information. The controls stay in the document - focusable, and read out by
+  a screen reader - but only surface on the row being worked on. Anything
+  without a pointer gets them outright.
+*/
+.var-row .row-actions {
+  opacity: 0;
+}
+
+.var-row:hover .row-actions,
+.var-row:focus-within .row-actions,
+.var-row[data-editing="true"] .row-actions {
+  opacity: 1;
+}
+
+.var-row:hover {
+  background: var(--plate-lit);
+}
+
+@media (hover: none) {
+  .var-row .row-actions {
+    opacity: 1;
+  }
+}

@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{ s.service_name }}</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Ctext y=%2726%27 font-size=%2726%27%3E%F0%9F%95%8A%3C/text%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /*
+        Pigeon is a different product from envless and should not look like it.
+        Where envless is a painted metal panel, Pigeon is paper: a quiet white
+        console whose one colour - the accent on the environment badge, the
+        send button, the live markers - is itself a configured value. Change
+        BRAND_ACCENT in envless and this page changes colour.
+      */
+      :root {
+        --accent: {{ s.accent }};
+        --paper: #fbfaf8;
+        --card: #ffffff;
+        --ink: #1a1a19;
+        --ink-soft: #6b6a66;
+        --ink-faint: #9b9a95;
+        --line: #e6e4df;
+        --warn: #9a6b12;
+        --bad: #a3342f;
+        --mono: ui-monospace, "SF Mono", "Cascadia Mono", "Roboto Mono", Menlo, monospace;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background: var(--paper);
+        color: var(--ink);
+        font-family: "Instrument Sans", system-ui, -apple-system, sans-serif;
+        font-size: 15px;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      a { color: var(--accent); }
+
+      .wrap { max-width: 1040px; margin: 0 auto; padding: 0 24px 56px; }
+
+      /* --- top bar --- */
+      header {
+        border-bottom: 1px solid var(--line);
+        background: var(--card);
+      }
+      .bar {
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 16px 24px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+      .mark {
+        font-size: 20px;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        padding: 3px 10px;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--accent) 12%, transparent);
+        color: color-mix(in srgb, var(--accent) 80%, var(--ink));
+        border: 1px solid color-mix(in srgb, var(--accent) 32%, transparent);
+        font-size: 13px;
+        font-weight: 500;
+      }
+      .dot {
+        width: 7px; height: 7px; border-radius: 50%;
+        background: var(--accent);
+      }
+      .spacer { flex: 1; }
+      .meta {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--ink-soft);
+      }
+
+      /* --- banners --- */
+      .banner {
+        margin: 18px 0 0;
+        padding: 12px 15px;
+        border-radius: 6px;
+        border: 1px solid;
+        font-size: 14px;
+      }
+      .banner.warn { background: #fdf6e7; border-color: #edd9a8; color: var(--warn); }
+      .banner.bad  { background: #fbeceb; border-color: #f0c8c5; color: var(--bad); }
+      [hidden] { display: none !important; }
+
+      /* --- layout --- */
+      .cols {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.85fr);
+        gap: 22px;
+        margin-top: 22px;
+        align-items: start;
+      }
+      @media (max-width: 860px) { .cols { grid-template-columns: 1fr; } }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 18px;
+      }
+      h2 {
+        margin: 0 0 3px;
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+      .sub { margin: 0 0 16px; color: var(--ink-soft); font-size: 13.5px; }
+
+      label { display: block; font-size: 13.5px; color: var(--ink-soft); margin-bottom: 4px; }
+      input[type="text"], input[type="email"], input[type="number"] {
+        width: 100%;
+        padding: 9px 11px;
+        border: 1px solid var(--line);
+        border-radius: 6px;
+        font: inherit;
+        background: var(--paper);
+      }
+      input:focus-visible { outline: 2px solid var(--accent); outline-offset: -1px; }
+      .fields { display: grid; gap: 12px; }
+      .two { display: grid; grid-template-columns: 1fr 110px; gap: 12px; }
+
+      button {
+        font: inherit;
+        font-weight: 500;
+        padding: 9px 16px;
+        border-radius: 6px;
+        border: 1px solid transparent;
+        background: var(--accent);
+        color: #fff;
+        cursor: pointer;
+      }
+      button:disabled { opacity: 0.5; cursor: not-allowed; }
+      .row { display: flex; align-items: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
+
+      /* --- the configuration readout --- */
+      dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 7px 14px; }
+      dt { color: var(--ink-soft); font-size: 13.5px; }
+      dd {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        overflow-wrap: anywhere;
+      }
+      .flag { font-weight: 500; }
+      .on  { color: var(--accent); }
+      .off { color: var(--ink-faint); }
+
+      .gauge {
+        height: 5px;
+        border-radius: 3px;
+        background: var(--line);
+        overflow: hidden;
+        margin: 7px 0 2px;
+      }
+      .gauge > span { display: block; height: 100%; background: var(--accent); }
+
+      /* --- outbox --- */
+      ul.outbox { list-style: none; margin: 14px 0 0; padding: 0; }
+      ul.outbox li {
+        padding: 10px 0;
+        border-top: 1px solid var(--line);
+        display: flex;
+        gap: 12px;
+        align-items: baseline;
+        font-size: 14px;
+      }
+      .time { font-family: var(--mono); font-size: 12px; color: var(--ink-faint); flex: none; }
+      .to { font-weight: 500; }
+      .detail { color: var(--ink-soft); font-size: 12.5px; font-family: var(--mono); }
+      .empty { color: var(--ink-faint); margin: 14px 0 0; }
+
+      footer {
+        margin-top: 30px;
+        padding-top: 14px;
+        border-top: 1px solid var(--line);
+        color: var(--ink-faint);
+        font-size: 13px;
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+      }
+
+      /* One acknowledgement, when configuration moves under the app. */
+      @keyframes settle { from { opacity: 0; transform: translateY(-3px); } to { opacity: 1; transform: none; } }
+      .settling { animation: settle 260ms ease-out; }
+      @media (prefers-reduced-motion: reduce) { .settling { animation: none; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="bar">
+        <span class="mark" data-bind="service_name">{{ s.service_name }}</span>
+        <span class="badge">
+          <span class="dot"></span>
+          <span data-bind="environment">{{ s.environment }}</span>
+        </span>
+        <span class="meta"><span data-bind="region">{{ s.region }}</span></span>
+        <span class="spacer"></span>
+        <span class="meta" id="link">
+          <span data-bind="connection-word">{{ "live from" if s.connected else "not connected to" }}</span>
+          envless · <span data-bind="value_count">{{ s.value_count }}</span> values ·
+          <span data-bind="version">{{ s.version or "—" }}</span>
+        </span>
+      </div>
+    </header>
+
+    <div class="wrap">
+      <div class="banner bad" id="fault" {% if not s.error %}hidden{% endif %}>
+        <strong>Running without configuration.</strong>
+        <span data-bind="error">{{ s.error or "" }}</span>
+      </div>
+
+      <div class="banner warn" id="maintenance" {% if not s.maintenance %}hidden{% endif %}>
+        <strong>Maintenance mode.</strong> Pigeon is accepting no messages. Turn
+        <code>MAINTENANCE_MODE</code> off in envless to resume.
+      </div>
+
+      <div class="cols">
+        <section>
+          <div class="card">
+            <h2>Send a message</h2>
+            <p class="sub">
+              Goes out through <span class="detail" data-bind="route">{{ s.route }}</span> as
+              <span class="detail" data-bind="sender">{{ s.sender }}</span>.
+            </p>
+
+            <form id="send" class="fields" autocomplete="off">
+              <div>
+                <label for="recipient">To</label>
+                <input id="recipient" name="recipient" type="text" placeholder="someone@example.com" />
+              </div>
+              <div class="two">
+                <div>
+                  <label for="subject">Subject</label>
+                  <input id="subject" name="subject" type="text" placeholder="Your receipt" />
+                </div>
+                <div id="count-field" {% if not s.batch_send %}hidden{% endif %}>
+                  <label for="count">How many</label>
+                  <input id="count" name="count" type="number" min="1" max="25" value="1" />
+                </div>
+              </div>
+              <div class="row">
+                <button type="submit" id="send-button">Send</button>
+                <span class="meta">
+                  <span data-bind="remaining">{{ s.remaining }}</span> of
+                  <span data-bind="limit">{{ s.limit }}</span> left this minute
+                </span>
+              </div>
+            </form>
+
+            <p class="sub" id="result" style="margin: 12px 0 0" hidden></p>
+          </div>
+
+          <div class="card" style="margin-top: 22px">
+            <h2>Sent</h2>
+            <p class="sub">What Pigeon has handed off since it started.</p>
+            <ul class="outbox" id="outbox">
+              {% for item in s.outbox %}
+              <li>
+                <span class="time">{{ item.at }}</span>
+                <span style="flex: 1">
+                  <span class="to">{{ item.to }}</span> — {{ item.subject }}<br />
+                  <span class="detail">
+                    via {{ item.via }} · {{ item.attempts }} attempt{{ "s" if item.attempts != 1 else "" }}
+                    {%- if item.batch %} · {{ item.batch }}{% endif %}
+                    {%- if item.receipt %} · receipt {{ item.receipt }}{% endif %}
+                  </span>
+                </span>
+              </li>
+              {% endfor %}
+            </ul>
+            <p class="empty" id="outbox-empty" {% if s.outbox %}hidden{% endif %}>
+              Nothing sent yet. Send one above.
+            </p>
+          </div>
+        </section>
+
+        <aside class="card" id="config-card">
+          <h2>Running on</h2>
+          <p class="sub">
+            Every value below came from envless. Change one there and this panel follows.
+          </p>
+
+          <dl>
+            <dt>Project</dt><dd data-bind="project">{{ s.project or "—" }}</dd>
+            <dt>Environment</dt><dd data-bind="environment">{{ s.environment }}</dd>
+            <dt>Region</dt><dd data-bind="region">{{ s.region }}</dd>
+            <dt>Route</dt><dd data-bind="route">{{ s.route }}</dd>
+            <dt>User</dt><dd data-bind="smtp_user">{{ s.smtp_user }}</dd>
+            <dt>Store</dt><dd data-bind="store">{{ s.store }}</dd>
+            <dt>Retries</dt><dd data-bind="retries">{{ s.retries }}</dd>
+            <dt>Log level</dt><dd data-bind="log_level">{{ s.log_level }}</dd>
+          </dl>
+
+          <div style="margin-top: 16px">
+            <div class="sub" style="margin: 0">
+              Rate limit — <span data-bind="used">{{ s.used }}</span> of
+              <span data-bind="limit">{{ s.limit }}</span> a minute
+            </div>
+            <div class="gauge">
+              <span id="gauge-fill" style="width: {{ (100 * s.used / s.limit) if s.limit else 0 }}%"></span>
+            </div>
+          </div>
+
+          <div style="margin-top: 16px">
+            <dl>
+              <dt>Batch sending</dt>
+              <dd class="flag {{ 'on' if s.batch_send else 'off' }}" data-flag="batch_send">
+                {{ "on" if s.batch_send else "off" }}
+              </dd>
+              <dt>Delivery receipts</dt>
+              <dd class="flag {{ 'on' if s.receipts else 'off' }}" data-flag="receipts">
+                {{ "on" if s.receipts else "off" }}
+              </dd>
+              <dt>Maintenance</dt>
+              <dd class="flag {{ 'on' if s.maintenance else 'off' }}" data-flag="maintenance">
+                {{ "on" if s.maintenance else "off" }}
+              </dd>
+            </dl>
+          </div>
+
+          <p class="sub" style="margin: 16px 0 0">
+            Reloaded <span data-bind="reloads">{{ s.reloads }}</span> time<span
+              data-bind="reloads-plural">{{ "" if s.reloads == 1 else "s" }}</span>
+            without restarting.
+          </p>
+        </aside>
+      </div>
+
+      <footer>
+        <span>Questions go to <span data-bind="support_email">{{ s.support_email }}</span></span>
+        <span class="spacer"></span>
+        <span>Configured by envless at {{ s.envless_url }}</span>
+      </footer>
+    </div>
+
+    <script>
+      // Pigeon's page keeps itself current the same way Pigeon does: it is told
+      // when something changed, then re-reads the state.
+      const bind = (name, value) => {
+        document.querySelectorAll(`[data-bind="${name}"]`).forEach((el) => {
+          el.textContent = value;
+        });
+      };
+
+      function paint(s) {
+        document.documentElement.style.setProperty("--accent", s.accent);
+        document.title = s.service_name;
+
+        for (const key of [
+          "service_name", "environment", "region", "route", "sender", "smtp_user",
+          "store", "retries", "log_level", "limit", "used", "remaining",
+          "value_count", "version", "project", "support_email", "reloads",
+        ]) {
+          bind(key, s[key] ?? "—");
+        }
+        bind("connection-word", s.connected ? "live from" : "not connected to");
+        bind("reloads-plural", s.reloads === 1 ? "" : "s");
+
+        for (const [flag, on] of [
+          ["batch_send", s.batch_send],
+          ["receipts", s.receipts],
+          ["maintenance", s.maintenance],
+        ]) {
+          document.querySelectorAll(`[data-flag="${flag}"]`).forEach((el) => {
+            el.textContent = on ? "on" : "off";
+            el.classList.toggle("on", on);
+            el.classList.toggle("off", !on);
+          });
+        }
+
+        document.getElementById("maintenance").hidden = !s.maintenance;
+        document.getElementById("fault").hidden = !s.error;
+        if (s.error) bind("error", s.error);
+        document.getElementById("count-field").hidden = !s.batch_send;
+        document.getElementById("send-button").disabled = s.maintenance;
+        document.getElementById("gauge-fill").style.width =
+          (s.limit ? Math.min(100, (100 * s.used) / s.limit) : 0) + "%";
+
+        const list = document.getElementById("outbox");
+        list.innerHTML = s.outbox
+          .map((item) => {
+            const bits = [
+              `via ${item.via}`,
+              `${item.attempts} attempt${item.attempts === 1 ? "" : "s"}`,
+            ];
+            if (item.batch) bits.push(item.batch);
+            if (item.receipt) bits.push(`receipt ${item.receipt}`);
+            return `<li><span class="time">${item.at}</span><span style="flex:1">
+              <span class="to"></span> — <span class="subject"></span><br />
+              <span class="detail">${bits.join(" · ")}</span></span></li>`;
+          })
+          .join("");
+        // Addresses and subjects are typed by people; set them as text.
+        [...list.querySelectorAll("li")].forEach((li, index) => {
+          li.querySelector(".to").textContent = s.outbox[index].to;
+          li.querySelector(".subject").textContent = s.outbox[index].subject;
+        });
+        document.getElementById("outbox-empty").hidden = s.outbox.length > 0;
+      }
+
+      async function refresh(settle) {
+        const response = await fetch("/api/state");
+        const s = await response.json();
+        paint(s);
+        if (settle) {
+          const card = document.getElementById("config-card");
+          card.classList.remove("settling");
+          void card.offsetWidth;
+          card.classList.add("settling");
+        }
+      }
+
+      document.getElementById("send").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const result = document.getElementById("result");
+        const body = new FormData(event.target);
+        if (document.getElementById("count-field").hidden) body.set("count", "1");
+        const response = await fetch("/send", { method: "POST", body });
+        const data = await response.json();
+        result.hidden = false;
+        result.textContent = data.message;
+        result.style.color = data.ok ? "var(--ink-soft)" : "var(--bad)";
+        if (data.ok) event.target.reset();
+        await refresh(false);
+      });
+
+      const stream = new EventSource("/events");
+      stream.onmessage = (event) => {
+        const notice = JSON.parse(event.data);
+        if (notice.reason === "ready") return;
+        refresh(notice.reason === "configuration");
+      };
+
+      // A slow tick keeps the rate-limit window honest between events.
+      setInterval(() => refresh(false), 5000);
+    </script>
+  </body>
+</html>
