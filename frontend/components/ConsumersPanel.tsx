@@ -110,11 +110,11 @@ export default function ConsumersPanel({ environment, version, onError, onNotice
               </div>
 
               <div
-                className="label data"
-                style={{ margin: "3px 0 0 19px", display: "flex", gap: 16, flexWrap: "wrap" }}
+                className="label"
+                style={{ margin: "3px 0 0 17px", display: "flex", gap: 16, flexWrap: "wrap" }}
               >
-                <span>{consumer.prefix}…</span>
-                <span>{consumer.last_ip || "no address yet"}</span>
+                <span className="data">{consumer.prefix}…</span>
+                <span className="data">{consumer.last_ip || "no address yet"}</span>
                 <span>
                   {consumer.pull_count} read{consumer.pull_count === 1 ? "" : "s"}
                 </span>
@@ -123,7 +123,7 @@ export default function ConsumersPanel({ environment, version, onError, onNotice
                 )}
                 <span
                   style={{
-                    color: consumer.up_to_date ? "var(--clear)" : "var(--caution)",
+                    color: consumer.up_to_date ? "var(--clear)" : "var(--caution-text)",
                   }}
                 >
                   {consumer.last_version
@@ -137,7 +137,7 @@ export default function ConsumersPanel({ environment, version, onError, onNotice
               {consumer.sightings.length > 1 && (
                 <p
                   className="label"
-                  style={{ margin: "3px 0 0 19px", color: "var(--caution)" }}
+                  style={{ margin: "3px 0 0 17px", color: "var(--caution-text)" }}
                 >
                   Has read from {consumer.sightings.length} different addresses:{" "}
                   <span className="data">

@@ -10,7 +10,7 @@ import CommandPalette, { type Command } from "./CommandPalette";
 import Drawer from "./Drawer";
 import ConsumersPanel from "./ConsumersPanel";
 import ImportPanel from "./ImportPanel";
-import RouteDiagram from "./RouteDiagram";
+import PromotionLine from "./PromotionLine";
 import TokensPanel from "./TokensPanel";
 import VariableRow from "./VariableRow";
 
@@ -266,7 +266,7 @@ export default function CommandCentre() {
         list.push({
           id: `go-${env.id}`,
           group: "Go to",
-          title: `${item.name} · ${env.name}`,
+          title: `${item.name}, ${env.name}`,
           hint: `${env.variable_count} vars`,
           run: () => {
             setPickedProject(item.id);
@@ -313,470 +313,377 @@ export default function CommandCentre() {
     return variables.filter((variable) => variable.key.toLowerCase().includes(needle));
   }, [variables, filter]);
 
-  const aspectColour =
-    environment?.aspect === "danger"
-      ? "var(--danger)"
-      : environment?.aspect === "caution"
-        ? "var(--caution)"
-        : "var(--clear)";
+  const aspect = environment?.aspect ?? "clear";
+
+  // One sentence about what is running on this environment, for the band.
+  const running = (() => {
+    if (!environment) return "";
+    const count = variables.length;
+    const vars = count === 1 ? "1 variable" : `${count} variables`;
+    if (!status || status.consumers === 0) return `${vars}. Nothing is reading it right now.`;
+    const apps = status.consumers === 1 ? "1 app is reading it" : `${status.consumers} apps are reading it`;
+    if (status.waiting.length === 0) {
+      return `${vars}. ${apps}, ${status.consumers === 1 ? "on" : "all on"} the current value.`;
+    }
+    return `${vars}. ${apps}, ${status.up_to_date} on the current value. Waiting on ${status.waiting.join(", ")}.`;
+  })();
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
-      {/* ---- status rail ---- */}
-      <header
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 16,
-          padding: "0 16px",
-          height: 46,
-          background: "var(--ink)",
-          color: "var(--lamp)",
-          flex: "none",
-        }}
-      >
-        <span style={{ fontWeight: 600, fontSize: 17, letterSpacing: "-0.015em" }}>envless</span>
+      {/* ---- top bar: the product, the projects, the state of the line ---- */}
+      <header className="topbar">
         <span
-          className="label"
-          style={{ color: "rgba(246,244,236,0.55)", borderLeft: "1px solid rgba(246,244,236,0.25)", paddingLeft: 16 }}
+          className="wordmark"
+          style={{ fontSize: 17, alignSelf: "center", flex: "none" }}
         >
-          Configuration control
+          envless
         </span>
 
-        <div style={{ flex: 1 }} />
-
-        <button
-          className="btn btn-quiet"
-          onClick={() => setPaletteOpen(true)}
-          style={{ color: "rgba(246,244,236,0.75)" }}
-        >
-          Search and commands
-          <span className="data" style={{ opacity: 0.6 }}>
-            Ctrl K
-          </span>
-        </button>
-
-        <button
-          className="btn btn-quiet"
-          onClick={() => setDrawer("alerts")}
-          style={{ color: alerts.length ? "var(--lamp)" : "rgba(246,244,236,0.75)" }}
-          title={
-            alerts.length
-              ? `${alerts.length} thing${alerts.length === 1 ? "" : "s"} worth looking at`
-              : "Nothing has looked wrong"
-          }
-        >
-          <span
-            className="lamp"
-            data-aspect={alerts.length ? "danger" : undefined}
-            data-dim={alerts.length ? undefined : "true"}
-          />
-          {alerts.length ? `Alerts ${alerts.length}` : "Alerts"}
-        </button>
-
-        <span style={{ display: "flex", alignItems: "center", gap: 7 }} title={`Database: ${database}`}>
-          <span
-            className="lamp"
-            data-aspect={database === "connected" ? "clear" : undefined}
-            data-dim={database === "connected" ? undefined : "true"}
-          />
-          <span className="label" style={{ color: "rgba(246,244,236,0.7)" }}>
-            Database
-          </span>
-        </span>
-        <span
-          style={{ display: "flex", alignItems: "center", gap: 7 }}
-          title={live ? "Receiving changes as they happen" : "Not receiving live changes"}
-        >
-          <span className="lamp" data-aspect={live ? "clear" : undefined} data-dim={live ? undefined : "true"} />
-          <span className="label" style={{ color: "rgba(246,244,236,0.7)" }}>
-            Live
-          </span>
-        </span>
-      </header>
-
-      <div style={{ display: "flex", flex: 1, minHeight: 0 }}>
-        {/* ---- project rail ---- */}
-        <nav
-          style={{
-            width: "var(--rail-width)",
-            flex: "none",
-            borderRight: "1px solid var(--edge-dark)",
-            background: "var(--fascia-deep)",
-            overflowY: "auto",
-            padding: "14px 0",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 12px 6px" }}>
-            <span className="label">Projects</span>
-            <button className="btn btn-quiet" onClick={addProject} title="New project">
-              New
+        <nav aria-label="Projects" className="project-nav">
+          {projects.map((item) => (
+            <button
+              key={item.id}
+              className="project-tab"
+              aria-current={item.id === projectId ? "true" : undefined}
+              onClick={() => setPickedProject(item.id)}
+            >
+              {item.name}
             </button>
-          </div>
-
-          {projects.length === 0 ? (
-            <p className="label" style={{ padding: "8px 12px", margin: 0 }}>
-              Nothing here yet. Create a project to hold its environments.
-            </p>
-          ) : (
-            projects.map((item) => (
-              <div key={item.id}>
-                <button
-                  onClick={() => setPickedProject(item.id)}
-                  style={{
-                    display: "block",
-                    width: "100%",
-                    textAlign: "left",
-                    padding: "6px 12px",
-                    border: "none",
-                    borderLeft: `3px solid ${item.id === projectId ? "var(--ink)" : "transparent"}`,
-                    background: item.id === projectId ? "var(--plate)" : "transparent",
-                    cursor: "pointer",
-                    fontWeight: item.id === projectId ? 600 : 400,
-                  }}
-                >
-                  {item.name}
-                </button>
-
-                {item.id === projectId && (
-                  <ul style={{ listStyle: "none", margin: "2px 0 8px", padding: 0 }}>
-                    {item.environments.map((env) => (
-                      <li key={env.id}>
-                        <button
-                          onClick={() => setPickedEnvironment(env.id)}
-                          style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 8,
-                            width: "100%",
-                            textAlign: "left",
-                            padding: "4px 12px 4px 22px",
-                            border: "none",
-                            background:
-                              env.id === environmentId ? "var(--plate-lit)" : "transparent",
-                            cursor: "pointer",
-                          }}
-                        >
-                          <span
-                            className={`lamp${flashingEnv === env.id ? " flashing" : ""}`}
-                            data-aspect={env.aspect}
-                            data-dim={env.id === environmentId ? undefined : "true"}
-                          />
-                          <span style={{ flex: 1, fontWeight: env.id === environmentId ? 500 : 400 }}>
-                            {env.name}
-                          </span>
-                          <span className="label num">{env.variable_count}</span>
-                        </button>
-                      </li>
-                    ))}
-                    <li>
-                      <button
-                        className="btn btn-quiet"
-                        onClick={addEnvironment}
-                        style={{ margin: "3px 0 0 19px" }}
-                      >
-                        Add environment
-                      </button>
-                    </li>
-                  </ul>
-                )}
-              </div>
-            ))
-          )}
+          ))}
+          <button
+            className="btn btn-quiet"
+            onClick={addProject}
+            style={{ alignSelf: "center", flex: "none" }}
+            title="Create a project"
+          >
+            New project
+          </button>
         </nav>
 
-        {/* ---- panel ---- */}
-        <main style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
-          <div style={{ padding: "14px 16px 0", flex: "none" }}>
-            <RouteDiagram
-              environments={environments}
-              selectedId={environmentId}
-              flashingId={flashingEnv}
-              connectedApps={status?.connected_apps ?? 0}
-              onSelect={(env) => setPickedEnvironment(env.id)}
+        <div className="topbar-status">
+          <button className="btn btn-quiet" onClick={() => setPaletteOpen(true)}>
+            Search
+            <span className="data status-text" style={{ opacity: 0.7, fontSize: 11.5 }}>
+              Ctrl K
+            </span>
+          </button>
+
+          <button
+            className="btn btn-quiet"
+            onClick={() => setDrawer("alerts")}
+            style={{ color: alerts.length ? "var(--danger)" : undefined }}
+            title={
+              alerts.length
+                ? `${alerts.length} thing${alerts.length === 1 ? "" : "s"} worth looking at`
+                : "Nothing has looked wrong"
+            }
+          >
+            <span
+              className="lamp"
+              data-aspect={alerts.length ? "danger" : undefined}
+              data-dim={alerts.length ? undefined : "true"}
             />
-          </div>
+            {alerts.length ? `${alerts.length} alert${alerts.length === 1 ? "" : "s"}` : "Alerts"}
+          </button>
 
-          {environment ? (
-            <>
-              {/* toolbar */}
-              <div
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 8,
-                  flexWrap: "wrap",
-                  padding: "12px 16px 10px",
-                  flex: "none",
-                }}
-              >
-                <span style={{ display: "flex", alignItems: "center", gap: 8, marginRight: 4 }}>
-                  <span className="lamp" data-aspect={environment.aspect} />
-                  <span style={{ fontSize: 17, letterSpacing: "-0.01em" }}>
-                    <span style={{ color: "var(--ink-soft)", fontWeight: 400 }}>
-                      {project?.name}{" "}
-                    </span>
-                    <span style={{ fontWeight: 600 }}>{environment.name}</span>
-                  </span>
-                </span>
+          <span
+            className="label"
+            style={{ display: "flex", alignItems: "center", gap: 7, padding: "0 8px" }}
+            title={`Database ${database}`}
+          >
+            <span
+              className="lamp"
+              data-aspect={database === "connected" ? "clear" : undefined}
+              data-dim={database === "connected" ? undefined : "true"}
+            />
+            <span className="status-text">Database</span>
+          </span>
+          <span
+            className="label"
+            style={{ display: "flex", alignItems: "center", gap: 7, padding: "0 8px" }}
+            title={live ? "Receiving changes as they happen" : "Not receiving live changes"}
+          >
+            <span className="lamp" data-aspect={live ? "clear" : undefined} data-dim={live ? undefined : "true"} />
+            <span className="status-text">Live</span>
+          </span>
+        </div>
+      </header>
 
-                <select
-                  value={environment.aspect}
-                  onChange={(event) => setAspect(event.target.value)}
-                  className="label"
-                  aria-label="How careful should changes here be"
-                  style={{
-                    background: "var(--plate)",
-                    border: "1px solid var(--recess)",
-                    borderRadius: "var(--radius)",
-                    padding: "3px 6px",
-                    color: aspectColour,
-                    cursor: "pointer",
-                  }}
-                >
-                  <option value="clear">Safe to change</option>
-                  <option value="caution">Change with care</option>
-                  <option value="danger">Live traffic</option>
-                </select>
+      {/* ---- the band: where you are, in the colour of how careful to be ---- */}
+      <section
+        className="band band-body"
+        data-aspect={aspect}
+        aria-label={environment ? `${project?.name} ${environment.name}` : "No environment"}
+      >
+        {project && (
+          <PromotionLine
+            environments={environments}
+            selectedId={environmentId}
+            flashingId={flashingEnv}
+            onSelect={(env) => setPickedEnvironment(env.id)}
+            onAdd={addEnvironment}
+          />
+        )}
 
-                <div style={{ flex: 1 }} />
-
-                <input
-                  ref={filterRef}
-                  className="field"
-                  value={filter}
-                  onChange={(event) => setFilter(event.target.value)}
-                  placeholder="Filter by name"
-                  aria-label="Filter variables by name"
-                  style={{ width: 190 }}
-                />
-                <button className="btn" onClick={() => setDrawer("import")}>
-                  Import
-                </button>
-                <button className="btn" onClick={copyAsDotenv}>
-                  Copy .env
-                </button>
-                <button className="btn" onClick={() => setDrawer("consumers")}>
-                  Reading
-                  {status && status.consumers > 0 ? ` ${status.consumers}` : ""}
-                </button>
-                <button className="btn" onClick={() => setDrawer("tokens")}>
-                  Tokens
-                </button>
-                <button className="btn" onClick={() => setDrawer("history")}>
-                  History
-                </button>
-                <button
-                  className="btn btn-primary"
-                  onClick={() => setAdding(true)}
-                >
-                  Add variable
-                </button>
-              </div>
-
-              {/* Who is running on this, and whether they have the current
-                  value. After a change this is where it lands. */}
-              {status && status.consumers > 0 && (
-                <div
-                  className="recessed"
-                  style={{
-                    margin: "0 16px 10px",
-                    padding: "6px 12px",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 10,
-                    flex: "none",
-                    borderLeft: `3px solid ${
-                      status.waiting.length ? "var(--caution)" : "var(--clear)"
-                    }`,
-                  }}
-                >
-                  <span
-                    className="lamp"
-                    data-aspect={status.waiting.length ? "caution" : "clear"}
-                  />
-                  <span className="label" style={{ color: "var(--ink)" }}>
-                    {status.waiting.length === 0
-                      ? `${status.up_to_date} of ${status.consumers} running on the current value`
-                      : `${status.up_to_date} of ${status.consumers} on the current value — waiting on ${status.waiting.join(", ")}`}
-                  </span>
-                  <button
-                    className="btn btn-quiet"
-                    onClick={() => setDrawer("consumers")}
-                    style={{ marginLeft: "auto" }}
-                  >
-                    Show them
-                  </button>
-                </div>
-              )}
-
-              {/* variable table */}
-              <div style={{ flex: 1, minHeight: 0, padding: "0 16px 14px" }}>
-                <div
-                  className="plate"
-                  style={{ height: "100%", display: "flex", flexDirection: "column", overflow: "hidden" }}
-                >
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "minmax(180px, 260px) minmax(0, 1fr) 34px 296px",
-                      gap: 14,
-                      padding: "7px 14px",
-                      borderBottom: "1px solid var(--edge-dark)",
-                      background: "var(--fascia)",
-                      flex: "none",
-                    }}
-                  >
-                    <span className="label">Name</span>
-                    <span className="label">Value</span>
-                    <span className="label num" style={{ textAlign: "right" }}>
-                      Ver
-                    </span>
-                    <span className="label num" style={{ display: "flex", gap: 18, justifyContent: "flex-end" }}>
-                      <span>
-                        {shown.length} of {variables.length}
-                      </span>
-                      {status && <span>version {status.version.slice(0, 8)}</span>}
-                    </span>
-                  </div>
-
-                  <div style={{ flex: 1, overflowY: "auto" }}>
-                    {adding && (
-                      <div
-                        style={{
-                          display: "grid",
-                          gridTemplateColumns: "minmax(180px, 260px) minmax(0, 1fr) 34px 296px",
-                          gap: 14,
-                          padding: "9px 14px",
-                          borderBottom: "1px solid var(--rule)",
-                          background: "var(--plate-lit)",
-                          alignItems: "center",
-                        }}
-                      >
-                        <input
-                          autoFocus
-                          className="field data"
-                          value={newKey}
-                          onChange={(event) => setNewKey(event.target.value.toUpperCase())}
-                          onKeyDown={(event) => {
-                            if (event.key === "Escape") setAdding(false);
-                            if (event.key === "Enter") void addVariable();
-                          }}
-                          placeholder="DATABASE_URL"
-                          aria-label="New variable name"
-                          spellCheck={false}
-                        />
-                        <input
-                          className="field data"
-                          value={newValue}
-                          onChange={(event) => setNewValue(event.target.value)}
-                          onKeyDown={(event) => {
-                            if (event.key === "Escape") setAdding(false);
-                            if (event.key === "Enter") void addVariable();
-                          }}
-                          placeholder="postgres://localhost/app"
-                          aria-label="New variable value"
-                          spellCheck={false}
-                        />
-                        <span />
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          <label className="label" style={{ display: "flex", gap: 5, cursor: "pointer" }}>
-                            <input
-                              type="checkbox"
-                              checked={newSecret}
-                              onChange={(event) => setNewSecret(event.target.checked)}
-                            />
-                            Secret
-                          </label>
-                          <button className="btn btn-primary" onClick={addVariable}>
-                            Save
-                          </button>
-                          <button className="btn btn-quiet" onClick={() => setAdding(false)}>
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {loadingVariables ? (
-                      <p className="label" style={{ padding: "18px 14px", margin: 0 }}>
-                        Reading {environment.name}…
-                      </p>
-                    ) : shown.length === 0 ? (
-                      <div style={{ padding: "26px 14px", maxWidth: "56ch" }}>
-                        <p style={{ margin: "0 0 4px", fontSize: 16 }}>
-                          {variables.length === 0
-                            ? `${environment.name} has no variables yet.`
-                            : `No variable here matches “${filter}”.`}
-                        </p>
-                        <p className="label" style={{ margin: "0 0 12px" }}>
-                          {variables.length === 0
-                            ? "Add them one at a time, or paste a .env file you already have."
-                            : "Clear the filter to see the rest."}
-                        </p>
-                        {variables.length === 0 && (
-                          <div style={{ display: "flex", gap: 8 }}>
-                            <button className="btn btn-primary" onClick={() => setAdding(true)}>
-                              Add a variable
-                            </button>
-                            <button className="btn" onClick={() => setDrawer("import")}>
-                              Import a .env file
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      shown.map((variable) => (
-                        <VariableRow
-                          key={`${variable.id}:${variable.version}:${variable.is_secret}`}
-                          variable={variable}
-                          environmentId={environment.id}
-                          aspect={environment.aspect}
-                          flashing={flashing === variable.key}
-                          onChanged={(updated) => {
-                            setVariables((current) =>
-                              current
-                                .map((item) => (item.id === updated.id ? rehide(updated) : item))
-                                .sort((a, b) => a.key.localeCompare(b.key)),
-                            );
-                            setFlashing(updated.key);
-                            setTimeout(() => setFlashing(null), 1400);
-                          }}
-                          onRemoved={(id) => {
-                            setVariables((current) => current.filter((item) => item.id !== id));
-                            void loadProjects();
-                          }}
-                          onError={complain}
-                          onNotice={say}
-                        />
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            </>
-          ) : (
-            <div style={{ padding: "40px 16px", maxWidth: "56ch" }}>
-              <p style={{ fontSize: 18, margin: "0 0 4px" }}>Pick an environment to see what it holds.</p>
-              <p className="label" style={{ margin: 0 }}>
-                Every project keeps its own line of environments on the left.
+        {environment ? (
+          <div
+            style={{
+              display: "flex",
+              alignItems: "flex-end",
+              justifyContent: "space-between",
+              gap: 24,
+              flexWrap: "wrap",
+              marginTop: 14,
+            }}
+          >
+            <div style={{ minWidth: 0, flex: "1 1 420px" }}>
+              <p style={{ margin: "0 0 6px", fontSize: 14, opacity: 0.8 }}>{project?.name}</p>
+              <h1 className="band-name">{environment.name}</h1>
+              <p style={{ margin: "12px 0 0", fontSize: 15, maxWidth: "62ch", opacity: 0.92 }}>
+                {loadingVariables ? `Reading ${environment.name}.` : running}
+                {status && status.consumers > 0 && (
+                  <>
+                    {" "}
+                    <button
+                      className="btn btn-quiet"
+                      onClick={() => setDrawer("consumers")}
+                      style={{
+                        padding: "0 2px",
+                        fontSize: 15,
+                        fontWeight: 500,
+                        textDecoration: "underline",
+                        textUnderlineOffset: 3,
+                        opacity: 1,
+                      }}
+                    >
+                      Show them
+                    </button>
+                  </>
+                )}
               </p>
             </div>
-          )}
-        </main>
-      </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flex: "none" }}>
+              {status && (
+                <span
+                  className="data num"
+                  style={{ opacity: 0.75, fontSize: 12 }}
+                  title="Version of this environment's configuration"
+                >
+                  version {status.version.slice(0, 8)}
+                </span>
+              )}
+              <select
+                value={environment.aspect}
+                onChange={(event) => setAspect(event.target.value)}
+                className="on-band"
+                aria-label="How careful should changes here be"
+              >
+                <option value="clear">Safe to change</option>
+                <option value="caution">Change with care</option>
+                <option value="danger">Live traffic</option>
+              </select>
+            </div>
+          </div>
+        ) : (
+          <div style={{ marginTop: 14, maxWidth: "56ch" }}>
+            <h1 className="band-name" style={{ fontSize: "clamp(26px, 3.6vw, 40px)" }}>
+              {project ? "No environments yet" : "No projects yet"}
+            </h1>
+            <p style={{ margin: "12px 0 0", fontSize: 15, opacity: 0.9 }}>
+              {project
+                ? "Add one and it becomes the first stop on this project's line."
+                : "Create a project to hold its environments."}
+            </p>
+            <button
+              className="btn btn-on-band"
+              onClick={project ? addEnvironment : addProject}
+              style={{ marginTop: 14 }}
+            >
+              {project ? "Add environment" : "New project"}
+            </button>
+          </div>
+        )}
+      </section>
+
+      {/* ---- the table ---- */}
+      <main style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+        {environment && (
+          <>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                flexWrap: "wrap",
+                padding: "12px var(--gutter)",
+                flex: "none",
+              }}
+            >
+              <input
+                ref={filterRef}
+                className="field"
+                value={filter}
+                onChange={(event) => setFilter(event.target.value)}
+                placeholder="Filter by name, or press /"
+                aria-label="Filter variables by name"
+                style={{ width: 240 }}
+              />
+              <span className="label num" style={{ marginLeft: 4 }}>
+                {filter ? `${shown.length} of ${variables.length}` : ""}
+              </span>
+
+              <div style={{ flex: 1 }} />
+
+              <button className="btn" onClick={() => setDrawer("import")}>
+                Import .env
+              </button>
+              <button className="btn" onClick={copyAsDotenv}>
+                Copy .env
+              </button>
+              <button className="btn" onClick={() => setDrawer("tokens")}>
+                Tokens
+              </button>
+              <button className="btn" onClick={() => setDrawer("history")}>
+                History
+              </button>
+              <button className="btn btn-primary" onClick={() => setAdding(true)}>
+                Add variable
+              </button>
+            </div>
+
+            <div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
+              <div className="var-grid var-head" style={{ flex: "none" }}>
+                <span className="label">Name</span>
+                <span className="label">Value</span>
+                <span className="label num" style={{ textAlign: "right" }}>
+                  Ver
+                </span>
+                <span />
+              </div>
+
+              <div style={{ flex: 1, overflowY: "auto", background: "var(--white)" }}>
+                {adding && (
+                  <div className="var-grid var-row" data-editing="true" style={{ alignItems: "center" }}>
+                    <input
+                      autoFocus
+                      className="field data"
+                      value={newKey}
+                      onChange={(event) => setNewKey(event.target.value.toUpperCase())}
+                      onKeyDown={(event) => {
+                        if (event.key === "Escape") setAdding(false);
+                        if (event.key === "Enter") void addVariable();
+                      }}
+                      placeholder="DATABASE_URL"
+                      aria-label="New variable name"
+                      spellCheck={false}
+                    />
+                    <input
+                      className="field data cell-value"
+                      value={newValue}
+                      onChange={(event) => setNewValue(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Escape") setAdding(false);
+                        if (event.key === "Enter") void addVariable();
+                      }}
+                      placeholder="postgres://localhost/app"
+                      aria-label="New variable value"
+                      spellCheck={false}
+                    />
+                    <span />
+                    <div className="row-actions" style={{ display: "flex", alignItems: "center", gap: 6, justifyContent: "flex-end" }}>
+                      <label className="label" style={{ display: "flex", gap: 6, cursor: "pointer", alignItems: "center" }}>
+                        <input
+                          type="checkbox"
+                          checked={newSecret}
+                          onChange={(event) => setNewSecret(event.target.checked)}
+                        />
+                        Secret
+                      </label>
+                      <button className="btn btn-primary" onClick={addVariable}>
+                        Save
+                      </button>
+                      <button className="btn btn-quiet" onClick={() => setAdding(false)}>
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {loadingVariables ? (
+                  <p className="label" style={{ padding: "18px 20px", margin: 0 }}>
+                    Reading {environment.name}.
+                  </p>
+                ) : shown.length === 0 ? (
+                  <div style={{ padding: "32px 20px", maxWidth: "56ch" }}>
+                    <p style={{ margin: "0 0 4px", fontSize: 17, fontWeight: 500 }}>
+                      {variables.length === 0
+                        ? `${environment.name} has no variables yet.`
+                        : `No variable here matches “${filter}”.`}
+                    </p>
+                    <p style={{ margin: "0 0 14px", color: "var(--ink-2)" }}>
+                      {variables.length === 0
+                        ? "Add them one at a time, or paste a .env file you already have."
+                        : "Clear the filter to see the rest."}
+                    </p>
+                    {variables.length === 0 ? (
+                      <div style={{ display: "flex", gap: 8 }}>
+                        <button className="btn btn-primary" onClick={() => setAdding(true)}>
+                          Add a variable
+                        </button>
+                        <button className="btn" onClick={() => setDrawer("import")}>
+                          Import a .env file
+                        </button>
+                      </div>
+                    ) : (
+                      <button className="btn" onClick={() => setFilter("")}>
+                        Clear the filter
+                      </button>
+                    )}
+                  </div>
+                ) : (
+                  shown.map((variable) => (
+                    <VariableRow
+                      key={`${variable.id}:${variable.version}:${variable.is_secret}`}
+                      variable={variable}
+                      environmentId={environment.id}
+                      aspect={environment.aspect}
+                      flashing={flashing === variable.key}
+                      onChanged={(updated) => {
+                        setVariables((current) =>
+                          current
+                            .map((item) => (item.id === updated.id ? rehide(updated) : item))
+                            .sort((a, b) => a.key.localeCompare(b.key)),
+                        );
+                        setFlashing(updated.key);
+                        setTimeout(() => setFlashing(null), 1400);
+                      }}
+                      onRemoved={(id) => {
+                        setVariables((current) => current.filter((item) => item.id !== id));
+                        void loadProjects();
+                      }}
+                      onError={complain}
+                      onNotice={say}
+                    />
+                  ))
+                )}
+              </div>
+            </div>
+          </>
+        )}
+      </main>
 
       {/* ---- activity ticker ---- */}
       <footer
         style={{
           flex: "none",
-          height: 30,
+          height: 32,
           display: "flex",
           alignItems: "center",
-          gap: 12,
-          padding: "0 16px",
-          background: "var(--fascia-deep)",
-          borderTop: "1px solid var(--edge-dark)",
+          gap: 14,
+          padding: "0 var(--gutter)",
+          borderTop: "1px solid var(--line)",
+          background: "var(--paper)",
           overflow: "hidden",
         }}
       >
@@ -784,28 +691,30 @@ export default function CommandCentre() {
           Activity
         </span>
         <span
-          className="label num"
+          className="num"
           style={{
             flex: 1,
             minWidth: 0,
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap",
-            color: "var(--ink)",
+            fontSize: 12.5,
+            color: "var(--ink-2)",
           }}
         >
           {activity.length === 0
             ? "Nothing has happened yet."
-            : activity
-                .slice(0, 4)
-                .map(
-                  (event) =>
-                    `${new Date(event.created_at).toLocaleTimeString([], {
+            : activity.slice(0, 4).map((event, index) => (
+                <span key={event.id} style={{ marginRight: index < 3 ? 28 : 0 }}>
+                  <span className="data" style={{ fontSize: 11.5, marginRight: 8 }}>
+                    {new Date(event.created_at).toLocaleTimeString([], {
                       hour: "2-digit",
                       minute: "2-digit",
-                    })}  ${event.summary}`,
-                )
-                .join("   ·   ")}
+                    })}
+                  </span>
+                  {event.summary}
+                </span>
+              ))}
         </span>
       </footer>
 
@@ -813,16 +722,18 @@ export default function CommandCentre() {
       {notice && (
         <div
           role="status"
-          className="plate"
           style={{
             position: "fixed",
-            bottom: 44,
+            bottom: 48,
             left: "50%",
             transform: "translateX(-50%)",
-            padding: "8px 14px",
-            borderLeft: `3px solid ${notice.tone === "bad" ? "var(--danger)" : "var(--clear)"}`,
+            padding: "9px 16px",
+            background: notice.tone === "bad" ? "var(--danger)" : "var(--ink)",
+            color: "var(--paper)",
+            borderRadius: "var(--radius)",
             zIndex: 70,
             maxWidth: "min(70ch, 90vw)",
+            fontWeight: 500,
           }}
         >
           {notice.text}
@@ -836,7 +747,7 @@ export default function CommandCentre() {
       <Drawer
         open={drawer === "tokens"}
         title="Access tokens"
-        subtitle={environment ? `${project?.name} · ${environment.name}` : undefined}
+        subtitle={environment ? `${project?.name}, ${environment.name}` : undefined}
         onClose={() => setDrawer(null)}
       >
         {environment && <TokensPanel environment={environment} onError={complain} onNotice={say} />}
@@ -845,7 +756,7 @@ export default function CommandCentre() {
       <Drawer
         open={drawer === "import"}
         title="Import a .env file"
-        subtitle={environment ? `into ${project?.name} · ${environment.name}` : undefined}
+        subtitle={environment ? `into ${project?.name}, ${environment.name}` : undefined}
         onClose={() => setDrawer(null)}
       >
         {environment && (
@@ -865,7 +776,7 @@ export default function CommandCentre() {
       <Drawer
         open={drawer === "consumers"}
         title="Reading this environment"
-        subtitle={environment ? `${project?.name} · ${environment.name}` : undefined}
+        subtitle={environment ? `${project?.name}, ${environment.name}` : undefined}
         onClose={() => setDrawer(null)}
       >
         {environment && (
@@ -893,7 +804,7 @@ export default function CommandCentre() {
       <Drawer
         open={drawer === "history"}
         title="Recent changes"
-        subtitle={environment ? `${project?.name} · ${environment.name}` : undefined}
+        subtitle={environment ? `${project?.name}, ${environment.name}` : undefined}
         onClose={() => setDrawer(null)}
       >
         {environment && <History environmentId={environment.id} />}
@@ -919,21 +830,20 @@ function History({ environmentId }: { environmentId: string }) {
         <li
           key={row.id}
           style={{
-            display: "flex",
+            display: "grid",
+            gridTemplateColumns: "138px minmax(0, 1fr) auto",
             alignItems: "baseline",
-            gap: 10,
-            padding: "7px 0",
+            gap: 12,
+            padding: "8px 0",
             borderBottom: "1px solid var(--rule)",
           }}
         >
-          <span className="label num" style={{ width: 132, flex: "none" }}>
-            {new Date(row.created_at).toLocaleString()}
-          </span>
-          <span className="data" style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
+          <span className="label num">{new Date(row.created_at).toLocaleString()}</span>
+          <span className="data" style={{ minWidth: 0, overflow: "hidden", textOverflow: "ellipsis" }}>
             {row.key}
           </span>
-          <span className="label">
-            {row.action} · v{row.version} · {row.actor}
+          <span className="label num">
+            {row.action} to v{row.version} by {row.actor}
           </span>
         </li>
       ))}

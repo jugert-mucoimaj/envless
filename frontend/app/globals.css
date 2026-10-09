@@ -3,40 +3,54 @@
 /*
   envless command centre.
 
-  The surface is modelled on a railway interlocking panel: a painted grey-green
-  fascia, engraved plates screwed onto it, and signal lamps that only light when
-  they mean something. Depth is a bevel - one light edge, one dark edge - never
-  a drop shadow. Corners are all but square, because a metal panel has no
-  rounded cards on it.
+  A control room where the room itself tells you where you are. The band
+  across the top takes the colour of the environment's aspect - green when it
+  is safe to change, amber when it wants care, red when live traffic runs on
+  it - and carries the environment's name large enough that nobody edits
+  production by accident. Everything under the band is quiet: pale paper,
+  blue-black ink, thin rules, no cards, no shadows.
 */
 
 :root {
-  --fascia: #c6ccc2;
-  --fascia-deep: #b3baaf;
-  --plate: #d8dcd3;
-  --plate-lit: #e6e9e1;
-  --recess: #9aa296;
+  --paper: #f6f7f4;
+  --paper-2: #eceee8;
+  --paper-3: #e1e4dd;
+  --white: #ffffff;
 
-  --ink: #191c18;
-  --ink-soft: #5a6157;
-  --ink-faint: #7c8378;
+  --ink: #14213d;
+  --ink-2: #4b5670;
+  --ink-3: #8a93a6;
+  --line: #d5d9e0;
+  --line-strong: #b9bfcb;
 
-  --clear: #2f6f4e;
-  --caution: #b8892b;
-  --danger: #8c2f39;
-  --lamp: #f6f4ec;
-  --lamp-dead: #6f7669;
+  --clear: #1e6b57;
+  --clear-deep: #16523f;
+  --caution: #e2a72e;
+  --caution-deep: #b9861f;
+  --caution-text: #7a5407;
+  --danger: #b23a2b;
+  --danger-deep: #8e2c20;
 
-  --edge-light: rgba(255, 255, 255, 0.62);
-  --edge-dark: rgba(25, 28, 24, 0.22);
-  --rule: rgba(25, 28, 24, 0.16);
+  /* Names the secondary panels still use. */
+  --ink-soft: var(--ink-2);
+  --ink-faint: var(--ink-3);
+  --rule: var(--line);
+  --lamp: var(--paper);
+  --plate: var(--white);
+  --plate-lit: var(--paper-2);
+  --recess: var(--line-strong);
+  --fascia: var(--paper);
+  --fascia-deep: var(--paper-2);
 
-  --radius: 2px;
-  --rail-width: 232px;
+  --band: var(--clear);
+  --band-deep: var(--clear-deep);
+  --band-ink: var(--paper);
 
-  --font-panel: var(--font-barlow), "Barlow", system-ui, sans-serif;
-  --font-label: var(--font-barlow-condensed), "Barlow Semi Condensed", system-ui, sans-serif;
-  --font-data: var(--font-plex-mono), "IBM Plex Mono", ui-monospace, monospace;
+  --radius: 3px;
+  --gutter: 24px;
+
+  --font-sans: var(--font-sans-src), "Schibsted Grotesk", system-ui, sans-serif;
+  --font-mono: var(--font-mono-src), "Martian Mono", ui-monospace, monospace;
 }
 
 * {
@@ -50,9 +64,9 @@ body {
 
 body {
   margin: 0;
-  background: var(--fascia);
+  background: var(--paper);
   color: var(--ink);
-  font-family: var(--font-panel);
+  font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
@@ -68,138 +82,265 @@ select {
 
 :focus-visible {
   outline: 2px solid var(--ink);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
-/* --- engraved surfaces ------------------------------------------------- */
-
-.plate {
-  background: var(--plate);
-  border-radius: var(--radius);
-  border-top: 1px solid var(--edge-light);
-  border-left: 1px solid var(--edge-light);
-  border-right: 1px solid var(--edge-dark);
-  border-bottom: 1px solid var(--edge-dark);
-}
-
-.recessed {
-  background: var(--fascia-deep);
-  border-radius: var(--radius);
-  border-top: 1px solid var(--edge-dark);
-  border-left: 1px solid var(--edge-dark);
-  border-right: 1px solid var(--edge-light);
-  border-bottom: 1px solid var(--edge-light);
-}
-
-/* --- panel labels: the engraved lettering on a fascia ------------------ */
+/* --- type ----------------------------------------------------------- */
 
 .label {
-  font-family: var(--font-label);
-  font-size: 12px;
+  font-size: 12.5px;
   font-weight: 500;
-  letter-spacing: 0.02em;
-  color: var(--ink-soft);
+  color: var(--ink-2);
 }
 
+/* Keys, values, versions: monospace where monospace is literally correct,
+   set a touch narrow so a long value survives a narrow column. */
 .data {
-  font-family: var(--font-data);
+  font-family: var(--font-mono);
+  font-variation-settings: "wdth" 88;
   font-size: 12.5px;
   font-variant-ligatures: none;
+  letter-spacing: -0.01em;
 }
 
 .num {
   font-variant-numeric: tabular-nums;
 }
 
-/* --- signal lamps ------------------------------------------------------ */
+.wordmark {
+  font-family: var(--font-mono);
+  font-variation-settings: "wdth" 112;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
 
-.lamp {
-  width: 10px;
-  height: 10px;
+/* --- the top bar ---------------------------------------------------- */
+
+.topbar {
+  display: flex;
+  align-items: stretch;
+  gap: 22px;
+  padding: 0 var(--gutter);
+  height: 50px;
+  flex: none;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+}
+
+.project-nav {
+  display: flex;
+  align-items: stretch;
+  gap: 18px;
+  min-width: 0;
+  flex: 1;
+  overflow-x: auto;
+  border-left: 1px solid var(--line);
+  padding-left: 22px;
+  scrollbar-width: none;
+}
+
+.project-nav::-webkit-scrollbar {
+  display: none;
+}
+
+.topbar-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+/* --- the band ------------------------------------------------------- */
+
+.band-body {
+  flex: none;
+  padding: 0 var(--gutter) 22px;
+}
+
+.band {
+  --band-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='white' stroke-width='1.5'/%3E%3C/svg%3E");
+  --band-rule: rgba(255, 255, 255, 0.3);
+  --band-hover: rgba(255, 255, 255, 0.14);
+  background: var(--band);
+  color: var(--band-ink);
+  transition: background-color 360ms ease, color 360ms ease;
+}
+
+.band[data-aspect="clear"] {
+  --band: var(--clear);
+  --band-deep: var(--clear-deep);
+}
+
+.band[data-aspect="caution"] {
+  --band: var(--caution);
+  --band-deep: var(--caution-deep);
+  --band-ink: var(--ink);
+  --band-arrow: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2314213d' stroke-width='1.5'/%3E%3C/svg%3E");
+  --band-rule: rgba(20, 33, 61, 0.28);
+  --band-hover: rgba(20, 33, 61, 0.08);
+}
+
+.band[data-aspect="danger"] {
+  --band: var(--danger);
+  --band-deep: var(--danger-deep);
+}
+
+.band-name {
+  font-family: var(--font-mono);
+  font-variation-settings: "wdth" 112;
+  font-weight: 600;
+  font-size: clamp(30px, 5.2vw, 62px);
+  line-height: 0.98;
+  letter-spacing: -0.035em;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The promotion line: environments in order, drawn on one rule. */
+.line-stop {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  padding: 10px 0 12px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+  cursor: pointer;
+  color: inherit;
+  text-align: left;
+  min-width: 0;
+  position: relative;
+}
+
+.line-stop::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: var(--band-rule);
+}
+
+.line-stop[aria-pressed="true"]::before {
+  background: var(--band-ink);
+  height: 4px;
+}
+
+.line-stop .stop-name {
+  font-weight: 600;
+  font-size: 14px;
+  opacity: 0.78;
+}
+
+.line-stop[aria-pressed="true"] .stop-name {
+  opacity: 1;
+}
+
+.line-stop .stop-count {
+  font-size: 12px;
+  opacity: 0.62;
+}
+
+.line-stop:hover .stop-name {
+  opacity: 1;
+}
+
+.line-stop:focus-visible {
+  outline-color: var(--band-ink);
+}
+
+/* Small marks for the aspect of an environment that is not the one shown. */
+.mark {
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   flex: none;
-  background: var(--lamp-dead);
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.5);
+  background: var(--ink-3);
+}
+
+.mark[data-aspect="clear"] {
+  background: var(--clear);
+}
+
+.mark[data-aspect="caution"] {
+  background: var(--caution-deep);
+}
+
+.mark[data-aspect="danger"] {
+  background: var(--danger);
+}
+
+.band .mark {
+  background: var(--band-ink);
+  opacity: 0.55;
+}
+
+/* Status dots in the top bar, and the panels' lamps. */
+.lamp {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--line-strong);
 }
 
 .lamp[data-aspect="clear"] {
   background: var(--clear);
-  box-shadow: 0 0 0 1px rgba(25, 28, 24, 0.3), 0 0 6px rgba(47, 111, 78, 0.75);
 }
 
 .lamp[data-aspect="caution"] {
-  background: var(--caution);
-  box-shadow: 0 0 0 1px rgba(25, 28, 24, 0.3), 0 0 6px rgba(184, 137, 43, 0.75);
+  background: var(--caution-deep);
 }
 
 .lamp[data-aspect="danger"] {
   background: var(--danger);
-  box-shadow: 0 0 0 1px rgba(25, 28, 24, 0.3), 0 0 6px rgba(140, 47, 57, 0.75);
 }
 
 .lamp[data-dim="true"] {
-  opacity: 0.34;
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.45);
+  background: var(--line-strong);
 }
 
-/* The single piece of unprompted motion: a lamp flashes once when a change
-   lands from somewhere else, then stops. */
-@keyframes lamp-flash {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  30% {
-    opacity: 0.15;
-  }
-  60% {
-    opacity: 1;
-  }
+/* --- surfaces ------------------------------------------------------- */
+
+.plate {
+  background: var(--white);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
 }
 
-.flashing {
-  animation: lamp-flash 620ms ease-in-out 2;
+.recessed {
+  background: var(--paper-2);
+  border-radius: var(--radius);
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .flashing {
-    animation: none;
-  }
-  * {
-    transition-duration: 0.01ms !important;
-  }
+.sheet {
+  background: var(--white);
+  border-left: 1px solid var(--line);
 }
 
-/* --- controls ---------------------------------------------------------- */
+/* --- controls ------------------------------------------------------- */
 
 .btn {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 11px;
-  background: var(--plate);
+  padding: 6px 12px;
+  background: var(--white);
   color: var(--ink);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius);
-  border-top: 1px solid var(--edge-light);
-  border-left: 1px solid var(--edge-light);
-  border-right: 1px solid var(--edge-dark);
-  border-bottom: 1px solid var(--edge-dark);
-  font-family: var(--font-label);
   font-size: 13px;
   font-weight: 500;
+  line-height: 1.3;
   cursor: pointer;
   white-space: nowrap;
 }
 
 .btn:hover:not(:disabled) {
-  background: var(--plate-lit);
-}
-
-.btn:active:not(:disabled) {
-  border-top-color: var(--edge-dark);
-  border-left-color: var(--edge-dark);
-  border-right-color: var(--edge-light);
-  border-bottom-color: var(--edge-light);
+  border-color: var(--ink);
 }
 
 .btn:disabled {
@@ -209,42 +350,102 @@ select {
 
 .btn-primary {
   background: var(--ink);
-  color: var(--lamp);
-  border-color: rgba(255, 255, 255, 0.18) rgba(0, 0, 0, 0.4) rgba(0, 0, 0, 0.4)
-    rgba(255, 255, 255, 0.18);
+  color: var(--paper);
+  border-color: var(--ink);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #23271f;
+  background: #1d2f57;
+  border-color: #1d2f57;
 }
 
 .btn-danger {
   color: var(--danger);
 }
 
+.btn-danger:hover:not(:disabled) {
+  border-color: var(--danger);
+}
+
 .btn-quiet {
   background: transparent;
   border-color: transparent;
-  color: var(--ink-soft);
-  padding: 4px 7px;
+  color: var(--ink-2);
+  padding: 5px 8px;
 }
 
 .btn-quiet:hover:not(:disabled) {
-  background: rgba(25, 28, 24, 0.08);
+  background: var(--paper-2);
   color: var(--ink);
+  border-color: transparent;
+}
+
+.btn-quiet.btn-danger:hover:not(:disabled) {
+  color: var(--danger);
+}
+
+/* Controls placed on the band. */
+.band .btn-quiet {
+  color: var(--band-ink);
+  opacity: 0.85;
+}
+
+.band .btn-quiet:hover:not(:disabled) {
+  background: var(--band-hover);
+  color: var(--band-ink);
+  opacity: 1;
+}
+
+.band .btn-on-band {
+  background: transparent;
+  color: var(--band-ink);
+  border-color: var(--band-rule);
+}
+
+.band .btn-on-band:hover:not(:disabled) {
+  border-color: var(--band-ink);
+  background: var(--band-hover);
+}
+
+.band select.on-band {
+  appearance: none;
+  background: transparent;
+  color: var(--band-ink);
+  border: 1px solid var(--band-rule);
+  border-radius: var(--radius);
+  padding: 5px 26px 5px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  background-image: var(--band-arrow);
+  background-repeat: no-repeat;
+  background-position: right 9px center;
+}
+
+.band select.on-band:hover {
+  border-color: var(--band-ink);
+}
+
+.band select.on-band option {
+  color: var(--ink);
+  background: var(--white);
+}
+
+.band :focus-visible {
+  outline-color: var(--band-ink);
 }
 
 .field {
   width: 100%;
-  padding: 6px 9px;
-  background: var(--plate-lit);
-  border: 1px solid var(--recess);
-  border-top-color: rgba(25, 28, 24, 0.3);
+  padding: 6px 10px;
+  background: var(--white);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius);
+  line-height: 1.4;
 }
 
 .field::placeholder {
-  color: var(--ink-faint);
+  color: var(--ink-3);
 }
 
 .field:focus {
@@ -252,35 +453,86 @@ select {
   outline-offset: -1px;
 }
 
-/* --- scrollbars, kept in the panel's materials ------------------------- */
+/* Project switcher in the top bar. */
+.project-tab {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 0 2px;
+  height: 100%;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink-2);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.project-tab:hover {
+  color: var(--ink);
+}
+
+.project-tab[aria-current="true"] {
+  color: var(--ink);
+  border-bottom-color: var(--ink);
+}
+
+/* --- scrollbars ------------------------------------------------------ */
 
 ::-webkit-scrollbar {
-  width: 11px;
-  height: 11px;
+  width: 10px;
+  height: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--fascia-deep);
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--recess);
-  border: 2px solid var(--fascia-deep);
+  background: var(--line-strong);
+  border: 2px solid var(--paper);
   border-radius: 6px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--ink-faint);
+  background: var(--ink-3);
 }
 
-/* --- variable rows ------------------------------------------------------ */
+/* --- the table -------------------------------------------------------- */
 
-/*
-  Seventeen rows each repeating the same four controls is noise, not
-  information. The controls stay in the document - focusable, and read out by
-  a screen reader - but only surface on the row being worked on. Anything
-  without a pointer gets them outright.
-*/
+.var-grid {
+  display: grid;
+  grid-template-columns: minmax(200px, 300px) minmax(0, 1fr) 44px 300px;
+  gap: 16px;
+  align-items: start;
+  padding: 0 var(--gutter);
+}
+
+.var-head {
+  border-bottom: 1px solid var(--line-strong);
+  padding-top: 9px;
+  padding-bottom: 9px;
+  background: var(--paper-2);
+}
+
+.var-row {
+  border-bottom: 1px solid var(--line);
+  padding-top: 10px;
+  padding-bottom: 10px;
+  transition: background-color 200ms ease;
+}
+
+.var-row:hover {
+  background: var(--paper-2);
+}
+
+.var-row[data-editing="true"] {
+  background: var(--paper-2);
+}
+
+/* Seventeen rows each repeating the same controls is noise. They stay in the
+   document, focusable and read out, and surface on the row being worked on.
+   Anything without a pointer gets them outright. */
 .var-row .row-actions {
   opacity: 0;
 }
@@ -291,12 +543,103 @@ select {
   opacity: 1;
 }
 
-.var-row:hover {
-  background: var(--plate-lit);
-}
-
 @media (hover: none) {
   .var-row .row-actions {
     opacity: 1;
+  }
+}
+
+/* A value that just moved from somewhere else is tinted in the environment's
+   own colour, then settles. The only motion the page makes on its own. */
+@keyframes settle {
+  0% {
+    background-color: var(--flash, var(--paper-2));
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.var-row.flashing {
+  animation: settle 1400ms ease-out 1;
+}
+
+.var-row.flashing[data-aspect="clear"] {
+  --flash: rgba(30, 107, 87, 0.22);
+}
+
+.var-row.flashing[data-aspect="caution"] {
+  --flash: rgba(226, 167, 46, 0.3);
+}
+
+.var-row.flashing[data-aspect="danger"] {
+  --flash: rgba(178, 58, 43, 0.22);
+}
+
+.flashing:not(.var-row) {
+  animation: settle 1400ms ease-out 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flashing,
+  .var-row.flashing {
+    animation: none;
+  }
+  .band {
+    transition: none;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* --- narrow screens -------------------------------------------------- */
+
+@media (max-width: 760px) {
+  :root {
+    --gutter: 16px;
+  }
+
+  .topbar {
+    gap: 12px;
+  }
+
+  .project-nav {
+    padding-left: 12px;
+    gap: 14px;
+  }
+
+  .status-text {
+    display: none;
+  }
+
+  .topbar-status .btn-quiet {
+    padding: 5px 6px;
+  }
+
+  .band-body {
+    padding-bottom: 18px;
+  }
+
+  .var-grid {
+    grid-template-columns: minmax(0, 1fr) 40px;
+    grid-auto-flow: dense;
+    gap: 6px 12px;
+  }
+
+  .var-head > :nth-child(2),
+  .var-head > :nth-child(4) {
+    display: none;
+  }
+
+  .var-row > .cell-value {
+    grid-column: 1 / -1;
+  }
+
+  .var-row > .row-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start !important;
+    opacity: 1;
+    flex-wrap: wrap;
   }
 }

@@ -27,27 +27,34 @@ build toolchain.
 
 ## The design
 
-It is drawn as a railway interlocking panel, because the job is the same one: a
-change to a live environment is only safe if you can see what is currently
-running on it. Every environment carries an aspect — **clear**, **caution** or
-**danger** — which is a real column in the database, not decoration, and it
-drives the signal lamps.
+A control room where the room itself tells you where you are. Every
+environment carries an aspect - **clear**, **caution** or **danger** - which is
+a real column in the database, not decoration, and it paints the band across
+the top of the screen.
 
-- **The promotion line** across the top is the hero: development → staging →
-  production drawn as track, with a signal at each environment and the one you
-  are looking at illuminated like an occupied block.
-- **Surfaces are bevelled, not shadowed.** A plate has a light top edge and a
-  dark bottom edge, and a 2px radius. Painted metal has no rounded cards on it.
-- **Lamps only light when they mean something.** A row's lamp is an unlit berth
-  until that value moves, and then it flashes once in the environment's own
-  aspect. That single flash is the only motion the page makes on its own.
-- **Colour**: fascia `#C6CCC2`, plate `#D8DCD3`, ink `#191C18`, and the three
-  aspects `#2F6F4E` / `#B8892B` / `#8C2F39`.
-- **Type**: Barlow for the interface, Barlow Semi Condensed for panel labels,
-  IBM Plex Mono for keys and values — where monospace is literally correct.
+- **The band** is the one loud thing on the page. It takes the environment's
+  aspect colour and carries the environment's name large enough that nobody
+  edits production by accident: green with pale text when it is safe to change,
+  true amber with dark ink when it wants care, red when live traffic runs on
+  it. Under the name, one sentence says what is running on this environment and
+  whether it has the current value yet.
+- **The promotion line** runs along the top edge of the band: the project's
+  environments in order, each a stop, the one you are looking at carrying the
+  heavy mark. A stop you are not on still shows its own aspect.
+- **Everything under the band is quiet.** Pale paper, blue-black ink, thin
+  rules. No cards, no bevels, no shadows. Projects live in the top bar, so the
+  table has the whole width.
+- **A value that just moved** from somewhere else is tinted in the
+  environment's colour for a moment, then settles. That is the only motion the
+  page makes on its own.
+- **Colour**: paper `#F6F7F4`, ink `#14213D`, and the three aspects
+  `#1E6B57` / `#E2A72E` / `#B23A2B`.
+- **Type**: Martian Mono for everything that is literally a machine-readable
+  name or value - keys, values, versions, and set wide for the environment's
+  name. Schibsted Grotesk for the sentences and the controls.
 
 Row controls stay hidden until a row is hovered or focused. Seventeen rows each
-repeating "Copy · Mark secret · Remove" is noise; the controls remain in the
+repeating "Copy, Mark secret, Remove" is noise; the controls remain in the
 document and reachable by keyboard.
 
 ## The files
@@ -56,7 +63,7 @@ document and reachable by keyboard.
 |---|---|
 | `app/globals.css` | the whole design system: tokens, plates, lamps, controls |
 | `components/CommandCentre.tsx` | the shell — selection, loading, live updates, actions |
-| `components/RouteDiagram.tsx` | the promotion line |
+| `components/PromotionLine.tsx` | the promotion line along the band |
 | `components/VariableRow.tsx` | one variable: read, reveal, edit, rename, remove |
 | `components/CommandPalette.tsx` | Ctrl-K — jump to an environment or start a job |
 | `components/TokensPanel.tsx` | issuing and revoking what applications read with |

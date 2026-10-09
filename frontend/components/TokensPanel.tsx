@@ -82,7 +82,7 @@ export default function TokensPanel({ environment, onError, onNotice }: Props) {
       {issued && (
         <div
           className="recessed"
-          style={{ padding: 12, borderLeft: "3px solid var(--caution)" }}
+          style={{ padding: 12, borderLeft: "3px solid var(--caution-deep)" }}
         >
           <p className="label" style={{ margin: "0 0 6px" }}>
             Copy this now. It is not shown again.
@@ -133,13 +133,14 @@ export default function TokensPanel({ environment, onError, onNotice }: Props) {
               >
                 <div style={{ minWidth: 0 }}>
                   <p style={{ margin: 0, fontWeight: 500 }}>{token.name}</p>
-                  <p className="label data" style={{ margin: 0 }}>
-                    {token.prefix}…{" · "}
-                    {token.pull_count === 0
-                      ? "never used"
-                      : `${token.pull_count} pull${token.pull_count === 1 ? "" : "s"}`}
-                    {token.last_used_at &&
-                      ` · last ${new Date(token.last_used_at).toLocaleString()}`}
+                  <p className="label" style={{ margin: "2px 0 0", display: "flex", gap: 14, flexWrap: "wrap" }}>
+                    <span className="data">{token.prefix}…</span>
+                    <span>
+                      {token.pull_count === 0
+                        ? "never used"
+                        : `${token.pull_count} pull${token.pull_count === 1 ? "" : "s"}`}
+                    </span>
+                    {token.last_used_at && <span>last {new Date(token.last_used_at).toLocaleString()}</span>}
                   </p>
                 </div>
                 <button className="btn btn-quiet btn-danger" onClick={() => revoke(token)}>

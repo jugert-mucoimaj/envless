@@ -133,28 +133,12 @@ export default function VariableRow({
 
   return (
     <div
-      className="var-row"
+      className={`var-grid var-row${flashing ? " flashing" : ""}`}
       data-editing={editing || confirmingDelete ? "true" : undefined}
-      style={{
-        display: "grid",
-        gridTemplateColumns: "minmax(180px, 260px) minmax(0, 1fr) 34px 296px",
-        gap: 14,
-        alignItems: "start",
-        padding: "9px 14px",
-        borderBottom: "1px solid var(--rule)",
-        background: editing ? "var(--plate-lit)" : "transparent",
-      }}
+      data-aspect={aspect}
     >
       {/* name */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, minHeight: 26 }}>
-        {/* An unlit berth lamp until this value moves, then it lights in the
-            environment's own aspect. Secrecy is already legible from the
-            masked value, so it is not what this reports. */}
-        <span
-          className={`lamp${flashing ? " flashing" : ""}`}
-          data-aspect={flashing ? aspect : undefined}
-          aria-hidden="true"
-        />
+      <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0, minHeight: 28 }}>
         {editing ? (
           <input
             className="field data"
@@ -174,10 +158,11 @@ export default function VariableRow({
               padding: 0,
               textAlign: "left",
               cursor: "pointer",
-              fontWeight: 500,
+              fontWeight: 600,
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
+              lineHeight: "24px",
             }}
             title={`Edit ${variable.key}`}
           >
@@ -187,7 +172,7 @@ export default function VariableRow({
       </div>
 
       {/* value */}
-      <div style={{ minWidth: 0 }}>
+      <div className="cell-value" style={{ minWidth: 0 }}>
         {editing ? (
           <textarea
             autoFocus
@@ -226,7 +211,8 @@ export default function VariableRow({
               overflow: "hidden",
               textOverflow: "ellipsis",
               whiteSpace: "nowrap",
-              minHeight: 22,
+              minHeight: 24,
+              lineHeight: "24px",
             }}
             title="Edit this value"
           >
@@ -243,10 +229,10 @@ export default function VariableRow({
       {/* how many times this value has moved - always legible */}
       <span
         className="label num"
-        style={{ alignSelf: "center", textAlign: "right" }}
+        style={{ alignSelf: "center", textAlign: "right", color: "var(--ink-3)" }}
         title="Times this value has changed"
       >
-        v{variable.version}
+        {variable.version}
       </span>
 
       {/* controls */}
@@ -257,7 +243,7 @@ export default function VariableRow({
           alignItems: "center",
           justifyContent: "flex-end",
           gap: 2,
-          minHeight: 26,
+          minHeight: 28,
         }}
       >
         {editing ? (

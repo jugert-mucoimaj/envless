@@ -39,18 +39,17 @@ export default function Drawer({ open, title, subtitle, onClose, children }: Pro
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(25, 28, 24, 0.42)",
+        background: "rgba(20, 33, 61, 0.38)",
         display: "flex",
         justifyContent: "flex-end",
         zIndex: 50,
       }}
     >
       <aside
-        className="plate"
+        className="sheet"
         style={{
-          width: "min(520px, 94vw)",
+          width: "min(540px, 94vw)",
           height: "100%",
-          borderRadius: 0,
           display: "flex",
           flexDirection: "column",
         }}
@@ -61,16 +60,16 @@ export default function Drawer({ open, title, subtitle, onClose, children }: Pro
             alignItems: "flex-start",
             justifyContent: "space-between",
             gap: 12,
-            padding: "14px 18px",
+            padding: "18px 24px 14px",
             borderBottom: "1px solid var(--rule)",
           }}
         >
           <div>
-            <h2 style={{ margin: 0, fontSize: 18, fontWeight: 600, letterSpacing: "-0.01em" }}>
+            <h2 style={{ margin: 0, fontSize: 20, fontWeight: 600, letterSpacing: "-0.015em" }}>
               {title}
             </h2>
             {subtitle && (
-              <p className="label" style={{ margin: "1px 0 0" }}>
+              <p style={{ margin: "2px 0 0", color: "var(--ink-2)" }}>
                 {subtitle}
               </p>
             )}
@@ -79,7 +78,7 @@ export default function Drawer({ open, title, subtitle, onClose, children }: Pro
             Close
           </button>
         </header>
-        <div style={{ flex: 1, overflowY: "auto", padding: "16px 18px 24px" }}>{children}</div>
+        <div style={{ flex: 1, overflowY: "auto", padding: "18px 24px 28px" }}>{children}</div>
       </aside>
     </div>
   );

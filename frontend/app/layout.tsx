@@ -1,23 +1,25 @@
 import type { Metadata } from "next";
-import { Barlow, Barlow_Semi_Condensed, IBM_Plex_Mono } from "next/font/google";
+import { Martian_Mono, Schibsted_Grotesk } from "next/font/google";
 import "./globals.css";
 
-const barlow = Barlow({
-  variable: "--font-barlow",
+/*
+  Two families, clearly distinct. Martian Mono carries everything that is
+  literally a machine-readable name or value - keys, values, versions - and,
+  set wide, the environment's name across the band. Schibsted Grotesk is for
+  the sentences and the controls around them.
+*/
+
+const mono = Martian_Mono({
+  variable: "--font-mono-src",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: "variable",
+  axes: ["wdth"],
 });
 
-const barlowCondensed = Barlow_Semi_Condensed({
-  variable: "--font-barlow-condensed",
+const grotesk = Schibsted_Grotesk({
+  variable: "--font-sans-src",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
-});
-
-const plexMono = IBM_Plex_Mono({
-  variable: "--font-plex-mono",
-  subsets: ["latin"],
-  weight: ["400", "500"],
+  weight: "variable",
 });
 
 export const metadata: Metadata = {
@@ -27,10 +29,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html
-      lang="en"
-      className={`${barlow.variable} ${barlowCondensed.variable} ${plexMono.variable} h-full`}
-    >
+    <html lang="en" className={`${mono.variable} ${grotesk.variable} h-full`}>
       <body className="min-h-full">{children}</body>
     </html>
   );

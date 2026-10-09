@@ -141,11 +141,11 @@ Tables are created on startup. There are no migrations to run.
   development, staging, production — are only a convenient default. Add
   `preview`, `eu-west`, `tenant-42`, anything.
 - **Aspect** (clear / caution / danger) is a real column, not decoration. It
-  drives the signal lamps, so an environment carrying live traffic looks
-  different from one that does not.
+  paints the band across the top of the command centre, so an environment
+  carrying live traffic looks different from one that does not.
 - **The command centre's look** lives in
-  [`frontend/app/globals.css`](frontend/app/globals.css) — six colour tokens
-  and three fonts at the top of the file. Change those and the whole panel
+  [`frontend/app/globals.css`](frontend/app/globals.css) — the colour tokens
+  and two fonts at the top of the file. Change those and the whole screen
   follows.
 - **Pigeon is optional.** It exists to demonstrate the runtime side. Drop the
   `pigeon` service and its folder if you do not want it.
@@ -202,7 +202,7 @@ are a counter and a lookup; both explain themselves and say what to do next.
 Neither pretends to be intrusion detection.
 
 **Rotation you can watch land.** **Rotate** on a secret opens an editor that
-deliberately does not show you the old value. Save, and a strip above the table
+deliberately does not show you the old value. Save, and the band at the top
 counts running applications onto the new one and names any that lag.
 
 **A command palette.** Ctrl-K. It is a command centre; it should be drivable
@@ -239,7 +239,7 @@ The Python checks need the services already running.
 
 | | |
 |---|---|
-| [`frontend/`](frontend/) | the command centre. Next.js, drawn as a railway signalling panel — the job is the same one, knowing what is running before you change it |
+| [`frontend/`](frontend/) | the command centre. Next.js. The band across the top takes the colour of the environment you are on, so you know what is running before you change it |
 | [`backend/`](backend/) | FastAPI over Postgres. `/api/…` for the command centre, `/v1/…` for your applications, kept deliberately apart |
 | [`pigeon/`](pigeon/) | a fictional messaging service that runs on envless and nothing else. The proof the loop closes |
 

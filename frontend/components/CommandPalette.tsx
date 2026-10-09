@@ -56,7 +56,7 @@ export default function CommandPalette({ commands, onClose }: Props) {
       style={{
         position: "fixed",
         inset: 0,
-        background: "rgba(25, 28, 24, 0.42)",
+        background: "rgba(20, 33, 61, 0.38)",
         display: "flex",
         alignItems: "flex-start",
         justifyContent: "center",
@@ -64,7 +64,7 @@ export default function CommandPalette({ commands, onClose }: Props) {
         zIndex: 60,
       }}
     >
-      <div className="plate" style={{ width: "min(620px, 92vw)", overflow: "hidden" }}>
+      <div className="plate" style={{ width: "min(640px, 92vw)", overflow: "hidden", borderColor: "var(--ink)" }}>
         <input
           autoFocus
           value={query}
@@ -91,7 +91,7 @@ export default function CommandPalette({ commands, onClose }: Props) {
             padding: "13px 16px",
             border: "none",
             borderBottom: "1px solid var(--rule)",
-            background: "var(--plate-lit)",
+            background: "var(--white)",
             fontSize: 16,
             outline: "none",
           }}
@@ -125,7 +125,7 @@ export default function CommandPalette({ commands, onClose }: Props) {
                   style={{
                     width: 92,
                     flex: "none",
-                    color: index === active ? "rgba(246,244,236,0.7)" : "var(--ink-faint)",
+                    color: index === active ? "rgba(246,247,244,0.7)" : "var(--ink-faint)",
                   }}
                 >
                   {command.group}
@@ -134,7 +134,7 @@ export default function CommandPalette({ commands, onClose }: Props) {
                 {command.hint && (
                   <span
                     className="label data"
-                    style={{ color: index === active ? "rgba(246,244,236,0.7)" : "var(--ink-faint)" }}
+                    style={{ color: index === active ? "rgba(246,247,244,0.7)" : "var(--ink-faint)" }}
                   >
                     {command.hint}
                   </span>
